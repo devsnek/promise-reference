@@ -1,0 +1,23 @@
+{
+  "name": "promisepolyfill",
+  "version": "1.0.0",
+  "description": "",
+  "main": "Promise.js",
+  "scripts": {
+    "test": "node test262.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devsnek/promise-polyfill.js.git"
+  },
+  "author": "devsnek",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/devsnek/promise-polyfill.js/issues"
+  },
+  "homepage": "https://github.com/devsnek/promise-polyfill.js#readme",
+  "devDependencies": {
+    "glob": "^7.1.2",
+    "js-yaml": "^3.12.0"
+  }
+}
