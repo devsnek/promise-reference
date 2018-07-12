@@ -12,7 +12,7 @@ const promiseSource = fs.readFileSync('./Promise.js', 'utf8');
 const environments = new WeakMap();
 
 function createRealm(print) {
-  const realm = vm.createContext({ print, setImmediate });
+  const realm = vm.createContext({ print });
 
   realm.$262 = {
     createRealm: () => createRealm(print),
@@ -29,7 +29,6 @@ function createRealm(print) {
       }
       return realm;
     },
-    detachArrayBuffer() {},
     evalScript(s, file) {
       if (file === true) {
         s = fs.readFileSync(s, 'utf8');
@@ -37,10 +36,9 @@ function createRealm(print) {
       vm.runInContext(s, realm);
     },
     global: vm.runInContext('this', realm),
-    agent: {},
   };
 
-  // hacky implementation of https://tc39.github.io/ecma262/#running-execution-context
+  // hacky implementation of https://tc39.github.io/ecma262/#sec-execution-contexts
   realm.$262.evalScript(`
 (() => {
 const module = { exports: {} };
