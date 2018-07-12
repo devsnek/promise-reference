@@ -146,26 +146,35 @@ function SpeciesConstructor(O, defaultConstructor) {
   throw new TypeError();
 }
 
-const queue = [];
-let queued = false;
-const schedule = typeof setImmediate !== 'undefined' ? setImmediate : setTimeout;
-function EnqueueJob(queueName, job, args) {
-  if (queueName !== 'PromiseJobs') {
-    throw new TypeError('Unknown job queue');
+let EnqueueJob;
+{
+  let schedule;
+  const global = (0, eval('this')); // eslint-disable-line no-eval
+
+  // Here we try to grab a way of scheduling jobs.
+  // If a real Promise exists, lets use that.
+  if (typeof global.Promise !== 'undefined' &&
+      Object.prototype.toString.call(new global.Promise(() => {})) === '[object Promise]') {
+    const p = global.Promise.resolve();
+    schedule = (f) => {
+      p.then(f);
+    };
+  } else if (typeof setImmediate !== 'undefined') {
+    // setImmediate is faster than setTimeout, but not everything has it
+    schedule = setImmediate;
+  } else {
+    // safe fallback
+    schedule = (f) => setTimeout(f, 0);
   }
-  queue.push(job.bind(undefined, ...args));
-  if (queued) {
-    return;
-  }
-  queued = true;
-  schedule(() => {
-    let item = queue.shift();
-    while (item) {
-      item();
-      item = queue.shift();
+
+  EnqueueJob = (queueName, job, args) => {
+    if (queueName !== 'PromiseJobs') {
+      throw new TypeError('Unknown job queue');
     }
-    queued = false;
-  });
+    schedule(() => {
+      job(...args);
+    });
+  };
 }
 
 function HostPromiseRejectionTracker(promise, operation) { // eslint-disable-line no-unused-vars
