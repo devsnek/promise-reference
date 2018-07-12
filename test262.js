@@ -9,31 +9,56 @@ const yaml = require('js-yaml').load;
 
 const promiseSource = fs.readFileSync('./Promise.js', 'utf8');
 
-function createRealm(print) {
-  const context = vm.createContext({ print, setImmediate });
+const environments = new WeakMap();
 
-  context.$262 = {
+function createRealm(print) {
+  const realm = vm.createContext({ print, setImmediate });
+
+  realm.$262 = {
     createRealm: () => createRealm(print),
+    lookupRealm: (lookup) => {
+      while (lookup) {
+        const env = environments.get(lookup);
+        if (env) {
+          return env;
+        }
+        if (lookup === lookup.constructor) {
+          break;
+        }
+        lookup = lookup.constructor;
+      }
+      return realm;
+    },
     detachArrayBuffer() {},
     evalScript(s, file) {
       if (file === true) {
         s = fs.readFileSync(s, 'utf8');
       }
-      vm.runInContext(s, context);
+      vm.runInContext(s, realm);
     },
-    global: vm.runInContext('this', context),
+    global: vm.runInContext('this', realm),
     agent: {},
   };
 
-  context.$262.evalScript(`
+  // hacky implementation of https://tc39.github.io/ecma262/#running-execution-context
+  realm.$262.evalScript(`
 (() => {
 const module = { exports: {} };
-${promiseSource}
+// move along, nothing to see here 👀
+${promiseSource.replace('return Promise.prototype', 'return $262.lookupRealm(constructor).Promise.prototype')}
 this.Promise = module.exports;
 })();
 `);
 
-  return context.$262;
+  const { global } = realm.$262;
+
+  Object.getOwnPropertyNames(global).forEach((k) => {
+    try {
+      environments.set(global[k], global);
+    } catch (e) {} // eslint-disable-line no-empty
+  });
+
+  return realm.$262;
 }
 
 function run(test, strict) {
@@ -97,11 +122,6 @@ function run(test, strict) {
 const tests = glob('./test262/test/built-ins/Promise/**/*.js');
 
 const skip = [
-  // I think to make this one pass I have to make sure all
-  // Promise constructors share the same prototype across realms,
-  // and I have no way to assure that.
-  './test262/test/built-ins/Promise/proto-from-ctor-realm.js',
-
   // Simply impossible. I have to use arrays.
   './test262/test/built-ins/Promise/all/does-not-invoke-array-setters.js',
 

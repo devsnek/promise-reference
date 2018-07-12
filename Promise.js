@@ -42,6 +42,9 @@ function Type(x) {
 function GetPrototypeFromConstructor(constructor, intrinsicDefaultProto) {
   const proto = constructor.prototype;
   if (Type(proto) !== 'Object') {
+    // This is explicitly incorrect. When looking up the intrinsic here it
+    // should use the realm environment for `constructor` but there's no way to
+    // polyfill that.
     if (intrinsicDefaultProto === '%PromisePrototype%') {
       return Promise.prototype; // eslint-disable-line no-use-before-define
     }
