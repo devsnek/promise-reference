@@ -15,12 +15,13 @@ const kIterator = Symbol('[[Iterator]]');
 const kNextMethod = Symbol('[[NextMethod]]');
 const kDone = Symbol('[[Done]]');
 
+// https://tc39.github.io/ecma262/#sec-ecmascript-data-types-and-values
 function Type(x) {
-  if (typeof x === 'symbol') {
-    return 'Symbol';
-  }
   if (x === null) {
     return 'Null';
+  }
+  if (typeof x === 'symbol') {
+    return 'Symbol';
   }
   if (typeof x === 'undefined') {
     return 'Undefined';
@@ -39,6 +40,7 @@ function Type(x) {
   }
 }
 
+// https://tc39.github.io/ecma262/#sec-getprototypefromconstructor
 function GetPrototypeFromConstructor(constructor, intrinsicDefaultProto) {
   const proto = constructor.prototype;
   if (Type(proto) !== 'Object') {
@@ -52,6 +54,7 @@ function GetPrototypeFromConstructor(constructor, intrinsicDefaultProto) {
   return proto;
 }
 
+// https://tc39.github.io/ecma262/#sec-ordinarycreatefromconstructor
 function OrdinaryCreateFromConstructor(constructor, intrinsicDefaultProto, internalSlotsList) {
   const proto = GetPrototypeFromConstructor(constructor, intrinsicDefaultProto);
   const i = {};
@@ -66,6 +69,7 @@ function OrdinaryCreateFromConstructor(constructor, intrinsicDefaultProto, inter
   return Object.create(proto, i);
 }
 
+// https://tc39.github.io/ecma262/#sec-getiterator
 function GetIterator(obj, hint, method) {
   if (method === undefined) {
     method = obj[Symbol.iterator];
@@ -87,6 +91,7 @@ function GetIterator(obj, hint, method) {
   return iteratorRecord;
 }
 
+// https://tc39.github.io/ecma262/#sec-iteratorclose
 function IteratorClose(iteratorRecord, completion) {
   const iterator = iteratorRecord[kIterator];
   const $return = iterator.return;
@@ -103,6 +108,7 @@ function IteratorClose(iteratorRecord, completion) {
   }
 }
 
+// https://tc39.github.io/ecma262/#sec-iteratornext
 function IteratorNext(iteratorRecord, value) {
   const result = iteratorRecord[kNextMethod].call(iteratorRecord[kIterator], value);
   if (Type(result) !== 'Object') {
@@ -111,10 +117,12 @@ function IteratorNext(iteratorRecord, value) {
   return result;
 }
 
+// https://tc39.github.io/ecma262/#sec-iteratorcomplete
 function IteratorComplete(iterResult) {
   return iterResult.done;
 }
 
+// https://tc39.github.io/ecma262/#sec-iteratorstep
 function IteratorStep(iteratorRecord) {
   const result = IteratorNext(iteratorRecord);
   const done = IteratorComplete(result);
@@ -124,10 +132,12 @@ function IteratorStep(iteratorRecord) {
   return result;
 }
 
+// https://tc39.github.io/ecma262/#sec-iteratorvalue
 function IteratorValue(iterResult) {
   return iterResult.value;
 }
 
+// https://tc39.github.io/ecma262/#sec-speciesconstructor
 function SpeciesConstructor(O, defaultConstructor) {
   const C = O.constructor;
   if (C === undefined) {
@@ -146,6 +156,7 @@ function SpeciesConstructor(O, defaultConstructor) {
   throw new TypeError();
 }
 
+// https://tc39.github.io/ecma262/#sec-enqueuejob
 let EnqueueJob;
 {
   let schedule;
@@ -177,10 +188,10 @@ let EnqueueJob;
   };
 }
 
-function HostPromiseRejectionTracker(promise, operation) { // eslint-disable-line no-unused-vars
-  // https://tc39.github.io/ecma262/#sec-host-promise-rejection-tracker
-}
+// https://tc39.github.io/ecma262/#sec-host-promise-rejection-tracker
+function HostPromiseRejectionTracker(promise, operation) {} // eslint-disable-line no-unused-vars
 
+// https://tc39.github.io/ecma262/#sec-promisereactionjob
 function PromiseReactionJob(reaction, argument) {
   const promiseCapability = reaction[kCapability];
   const type = reaction[kType];
@@ -215,6 +226,7 @@ function PromiseReactionJob(reaction, argument) {
   return status;
 }
 
+// https://tc39.github.io/ecma262/#sec-promiseresolvethenablejob
 function PromiseResolveThenableJob(promiseToResolve, thenable, then) {
   // eslint-disable-next-line no-use-before-define
   const resolvingFunctions = CreateResolvingFunctions(promiseToResolve);
@@ -230,6 +242,7 @@ function PromiseResolveThenableJob(promiseToResolve, thenable, then) {
   }
 }
 
+// https://tc39.github.io/ecma262/#sec-newpromisecapability
 function NewPromiseCapability(C) {
   const promiseCapability = {
     [kPromise]: undefined,
@@ -260,6 +273,7 @@ function NewPromiseCapability(C) {
   return promiseCapability;
 }
 
+// https://tc39.github.io/ecma262/#sec-triggerpromisereactions
 function TriggerPromiseReactions(reactions, argument) {
   reactions.forEach((reaction) => {
     EnqueueJob('PromiseJobs', PromiseReactionJob, [reaction, argument]);
@@ -267,6 +281,7 @@ function TriggerPromiseReactions(reactions, argument) {
   return undefined;
 }
 
+// https://tc39.github.io/ecma262/#sec-fulfillpromise
 function FulfillPromise(promise, value) {
   const reactions = promise[kPromiseFulfillReactions];
   promise[kPromiseResult] = value;
@@ -276,6 +291,7 @@ function FulfillPromise(promise, value) {
   return TriggerPromiseReactions(reactions, value);
 }
 
+// https://tc39.github.io/ecma262/#sec-rejectpromise
 function RejectPromise(promise, reason) {
   const reactions = promise[kPromiseRejectReactions];
   promise[kPromiseResult] = reason;
@@ -289,6 +305,8 @@ function RejectPromise(promise, reason) {
 }
 
 const hasOwnProperty = Function.call.bind(Object.prototype.hasOwnProperty);
+
+// https://tc39.github.io/ecma262/#sec-ispromise
 function IsPromise(x) {
   if (Type(x) !== 'Object') {
     return false;
@@ -301,6 +319,7 @@ function IsPromise(x) {
   return true;
 }
 
+// https://tc39.github.io/ecma262/#sec-promiseresolve
 function PromiseResolve(C, x) {
   if (IsPromise(x)) {
     const xConstructor = x.constructor;
@@ -313,6 +332,7 @@ function PromiseResolve(C, x) {
   return promiseCapability[kPromise];
 }
 
+// https://tc39.github.io/ecma262/#sec-performpromisethen
 function PerformPromiseThen(promise, onFulfilled, onRejected, resultCapability) {
   if (typeof onFulfilled !== 'function') {
     onFulfilled = undefined;
@@ -349,6 +369,7 @@ function PerformPromiseThen(promise, onFulfilled, onRejected, resultCapability) 
   return resultCapability[kPromise];
 }
 
+// https://tc39.github.io/ecma262/#sec-createresolvingfunctions
 function CreateResolvingFunctions(promise) {
   let alreadyResolved = false;
 
@@ -398,6 +419,7 @@ function CreateResolvingFunctions(promise) {
   };
 }
 
+// https://tc39.github.io/ecma262/#sec-performpromiseall
 function PerformPromiseAll(iteratorRecord, constructor, resultCapability) {
   const values = [];
   let remainingElementsCount = 1;
@@ -467,6 +489,7 @@ function PerformPromiseAll(iteratorRecord, constructor, resultCapability) {
   }
 }
 
+// https://tc39.github.io/ecma262/#sec-performpromiserace
 function PerformPromiseRace(iteratorRecord, constructor, resultCapability) {
   while (true) { // eslint-disable-line no-constant-condition
     let next;
@@ -495,7 +518,9 @@ function PerformPromiseRace(iteratorRecord, constructor, resultCapability) {
   }
 }
 
+// https://tc39.github.io/ecma262/#sec-promise-objects
 class Promise {
+  // https://tc39.github.io/ecma262/#sec-promise.all
   static all(iterable) {
     const C = this;
     if (Type(C) !== 'Object') {
@@ -536,6 +561,7 @@ class Promise {
     return result;
   }
 
+  // https://tc39.github.io/ecma262/#sec-promise.race
   static race(iterable) {
     const C = this;
     if (Type(C) !== 'Object') {
@@ -576,14 +602,7 @@ class Promise {
     return result;
   }
 
-  static resolve(x) {
-    const C = this;
-    if (Type(C) !== 'Object') {
-      throw new TypeError();
-    }
-    return PromiseResolve(C, x);
-  }
-
+  // https://tc39.github.io/ecma262/#sec-promise.reject
   static reject(r) {
     const C = this;
     if (Type(C) !== 'Object') {
@@ -594,16 +613,28 @@ class Promise {
     return promiseCapability[kPromise];
   }
 
+  // https://tc39.github.io/ecma262/#sec-promise.resolve
+  static resolve(x) {
+    const C = this;
+    if (Type(C) !== 'Object') {
+      throw new TypeError();
+    }
+    return PromiseResolve(C, x);
+  }
+
+  // https://tc39.github.io/ecma262/#sec-get-promise-@@species
   static get [Symbol.species]() {
     return this;
   }
 
+  // https://tc39.github.io/ecma262/#sec-promise-executor
   constructor(executor) {
     if (typeof executor !== 'function') {
       throw new TypeError(`${executor} is not a function`);
     }
 
     const promise = OrdinaryCreateFromConstructor(new.target, '%PromisePrototype%', [
+      // https://tc39.github.io/ecma262/#sec-properties-of-promise-instances
       kPromiseState,
       kPromiseFulfillReactions,
       kPromiseRejectReactions,
@@ -627,21 +658,13 @@ class Promise {
     return promise;
   }
 
-  then(onFulfilled, onRejected) {
-    const promise = this;
-    if (!IsPromise(promise)) {
-      throw new TypeError('method called on invalid receiver');
-    }
-    const C = SpeciesConstructor(promise, Promise);
-    const resultCapability = NewPromiseCapability(C);
-    return PerformPromiseThen(promise, onFulfilled, onRejected, resultCapability);
-  }
-
+  // https://tc39.github.io/ecma262/#sec-promise.prototype.catch
   catch(onRejected) {
     const promise = this;
     return promise.then(undefined, onRejected);
   }
 
+  // https://tc39.github.io/ecma262/#sec-promise.prototype.finally
   finally(onFinally) {
     const promise = this;
 
@@ -675,8 +698,20 @@ class Promise {
 
     return promise.then(thenFinally, catchFinally);
   }
+
+  // https://tc39.github.io/ecma262/#sec-promise.prototype.then
+  then(onFulfilled, onRejected) {
+    const promise = this;
+    if (!IsPromise(promise)) {
+      throw new TypeError('method called on invalid receiver');
+    }
+    const C = SpeciesConstructor(promise, Promise);
+    const resultCapability = NewPromiseCapability(C);
+    return PerformPromiseThen(promise, onFulfilled, onRejected, resultCapability);
+  }
 }
 
+// https://tc39.github.io/ecma262/#sec-promise.prototype-@@tostringtag
 Object.defineProperty(Promise.prototype, Symbol.toStringTag, {
   value: 'Promise',
   enumerable: false,
