@@ -182,7 +182,7 @@ let EnqueueJob;
 
   EnqueueJob = (queueName, job, args) => {
     if (queueName !== 'PromiseJobs') {
-      throw new TypeError('Unknown job queue');
+      throw new TypeError();
     }
 
     queue.push(job.bind(undefined, ...args));
@@ -267,18 +267,18 @@ function NewPromiseCapability(C) {
     // GetCapabilitiesExecutor
     if (promiseCapability[kResolve] !== undefined ||
         promiseCapability[kReject] !== undefined) {
-      throw new TypeError('Promise executor has already been invoked with non-undefined arguments');
+      throw new TypeError();
     }
     promiseCapability[kResolve] = resolve;
     promiseCapability[kReject] = reject;
   });
 
   if (typeof promiseCapability[kResolve] !== 'function') {
-    throw new TypeError('Promise resolve function is not callable');
+    throw new TypeError();
   }
 
   if (typeof promiseCapability[kReject] !== 'function') {
-    throw new TypeError('Promise reject function is not callable');
+    throw new TypeError();
   }
 
   promiseCapability[kPromise] = promise;
@@ -643,7 +643,7 @@ class Promise {
   // https://tc39.github.io/ecma262/#sec-promise-executor
   constructor(executor) {
     if (typeof executor !== 'function') {
-      throw new TypeError(`${executor} is not a function`);
+      throw new TypeError();
     }
 
     const promise = OrdinaryCreateFromConstructor(new.target, '%PromisePrototype%', [
@@ -716,7 +716,7 @@ class Promise {
   then(onFulfilled, onRejected) {
     const promise = this;
     if (!IsPromise(promise)) {
-      throw new TypeError('method called on invalid receiver');
+      throw new TypeError();
     }
     const C = SpeciesConstructor(promise, Promise);
     const resultCapability = NewPromiseCapability(C);
