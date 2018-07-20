@@ -160,6 +160,8 @@ function SpeciesConstructor(O, defaultConstructor) {
 let EnqueueJob;
 {
   let schedule;
+  const queue = [];
+  let queued = false;
   const global = (0, eval('this')); // eslint-disable-line no-eval
 
   // Here we try to grab a way of scheduling jobs.
@@ -170,7 +172,7 @@ let EnqueueJob;
     schedule = (f) => {
       p.then(f);
     };
-  } else if (typeof setImmediate !== 'undefined') {
+  } else if (typeof setImmediate === 'function') {
     // setImmediate is faster than setTimeout, but not everything has it
     schedule = setImmediate;
   } else {
@@ -182,9 +184,20 @@ let EnqueueJob;
     if (queueName !== 'PromiseJobs') {
       throw new TypeError('Unknown job queue');
     }
-    schedule(() => {
-      job(...args);
-    });
+
+    queue.push(job.bind(undefined, ...args));
+
+    if (queued === false) {
+      queued = true;
+      schedule(() => {
+        let j = queue.shift();
+        while (j) {
+          j();
+          j = queue.shift();
+        }
+        queued = false;
+      });
+    }
   };
 }
 
