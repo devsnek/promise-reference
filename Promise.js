@@ -156,11 +156,26 @@ function SpeciesConstructor(O, defaultConstructor) {
   throw new TypeError();
 }
 
+// https://tc39.github.io/ecma262/#sec-list-and-record-specification-type
+// Operate on an ordered list without triggering array prototype shenanigans
+function List() {}
+List.prototype = {
+  length: 0,
+  push: Array.prototype.push,
+  shift: Array.prototype.shift,
+  forEach: Array.prototype.forEach,
+  __proto__: null,
+};
+
+function CreateArrayFromList(list) {
+  return Array.from(list);
+}
+
 // https://tc39.github.io/ecma262/#sec-enqueuejob
 let EnqueueJob;
 {
   let schedule;
-  const queue = [];
+  const queue = new List();
   let queued = false;
   const global = (0, eval('this')); // eslint-disable-line no-eval
 
@@ -434,7 +449,7 @@ function CreateResolvingFunctions(promise) {
 
 // https://tc39.github.io/ecma262/#sec-performpromiseall
 function PerformPromiseAll(iteratorRecord, constructor, resultCapability) {
-  const values = [];
+  const values = new List();
   let remainingElementsCount = 1;
   let index = 0;
 
@@ -452,7 +467,7 @@ function PerformPromiseAll(iteratorRecord, constructor, resultCapability) {
       remainingElementsCount -= 1;
 
       if (remainingElementsCount === 0) {
-        const valuesArray = values;
+        const valuesArray = CreateArrayFromList(values);
         resultCapability[kResolve].call(undefined, valuesArray);
       }
 
@@ -487,7 +502,7 @@ function PerformPromiseAll(iteratorRecord, constructor, resultCapability) {
 
       remainingElementsCount -= 1;
       if (remainingElementsCount === 0) {
-        const valuesArray = values;
+        const valuesArray = CreateArrayFromList(values);
         resultCapability[kResolve].call(undefined, valuesArray);
       }
 
@@ -656,8 +671,8 @@ class Promise {
     ]);
 
     promise[kPromiseState] = 'pending';
-    promise[kPromiseFulfillReactions] = [];
-    promise[kPromiseRejectReactions] = [];
+    promise[kPromiseFulfillReactions] = new List();
+    promise[kPromiseRejectReactions] = new List();
     promise[kPromiseIsHandled] = false;
 
     const resolvingFunctions = CreateResolvingFunctions(promise);

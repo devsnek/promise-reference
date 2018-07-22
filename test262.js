@@ -120,9 +120,6 @@ function run(test, strict) {
 const tests = glob('./test262/test/built-ins/Promise/**/*.js');
 
 const skip = [
-  // Simply impossible. I have to use arrays.
-  './test262/test/built-ins/Promise/all/does-not-invoke-array-setters.js',
-
   // The next 4 will not pass in any engine. They assume that anonymous
   // functions do not have an own `name` property.
   './test262/test/built-ins/Promise/executor-function-name.js',
