@@ -158,12 +158,15 @@ function SpeciesConstructor(O, defaultConstructor) {
 
 // https://tc39.github.io/ecma262/#sec-list-and-record-specification-type
 // Operate on an ordered list without triggering array prototype shenanigans
-function List() {}
+function List() {
+  return Reflect.construct(Array, [], List);
+}
+List[Symbol.species] = List;
 List.prototype = {
-  length: 0,
   push: Array.prototype.push,
   shift: Array.prototype.shift,
   forEach: Array.prototype.forEach,
+  constructor: List,
   __proto__: null,
 };
 
