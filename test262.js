@@ -42,7 +42,6 @@ function createRealm(print) {
   realm.$262.evalScript(`
 (() => {
 const module = { exports: {} };
-// move along, nothing to see here 👀
 ${promiseSource.replace('return Promise.prototype', 'return $262.lookupRealm(constructor).Promise.prototype')}
 this.Promise = module.exports;
 })();
@@ -100,6 +99,10 @@ function run(test, strict) {
         resolve(options);
         return;
       }
+    }
+
+    if (options.features && options.features.includes('Promise.allSettled')) {
+      return;
     }
 
     try {

@@ -182,10 +182,13 @@ let EnqueueJob;
   let queued = false;
   const global = (0, eval('this')); // eslint-disable-line no-eval
 
-  // Here we try to grab a way of scheduling jobs.
-  // If a real Promise exists, lets use that.
-  if (typeof global.Promise !== 'undefined' &&
-      Object.prototype.toString.call(new global.Promise(() => {})) === '[object Promise]') {
+  if (typeof global.queueMicrotask === 'function') {
+    // queueMicrotask exists in recent browsers and Node.js,
+    // and is functionally identical to EnqueueJob
+    schedule = global.queueMicrotask;
+  } else if (typeof global.Promise !== 'undefined'
+      && Object.prototype.toString.call(new global.Promise(() => {})) === '[object Promise]') {
+    // If the real Promise exists, we can use that
     const p = global.Promise.resolve();
     schedule = (f) => {
       p.then(f);
@@ -208,10 +211,8 @@ let EnqueueJob;
     if (queued === false) {
       queued = true;
       schedule(() => {
-        let j = queue.shift();
-        while (j) {
-          j();
-          j = queue.shift();
+        while (queue.length > 0) {
+          queue.shift()();
         }
         queued = false;
       });
@@ -283,8 +284,8 @@ function NewPromiseCapability(C) {
 
   const promise = new C((resolve, reject) => {
     // GetCapabilitiesExecutor
-    if (promiseCapability[kResolve] !== undefined ||
-        promiseCapability[kReject] !== undefined) {
+    if (promiseCapability[kResolve] !== undefined
+        || promiseCapability[kReject] !== undefined) {
       throw new TypeError();
     }
     promiseCapability[kResolve] = resolve;
